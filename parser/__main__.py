@@ -37,9 +37,9 @@ def main() -> None:
     argparser.add_argument(
         '--new-since',
         type=int,
-        default=81_598_960,
+        default=815_368_990,
         help='GitHub repository ID after which new repositories will be fetched.\n'
-             'Defaults to 81598960 which is just before ID for python/cpython.',
+             'Defaults to 815368990 which is just before ID for Prometheus3375/dim-wishlist.',
         )
 
     argparser = argparser.parse_args()
