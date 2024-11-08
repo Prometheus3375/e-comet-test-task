@@ -48,13 +48,10 @@ def main() -> None:
     # Set GITHUB_TOKEN before any other import
     os.environ['GITHUB_TOKEN'] = argparser.github_token
 
-    # Configure logging before import
     from common.logging import init_logging
-
-    init_logging()
-
     from parser.update import update_database
 
+    init_logging()
     update_database(
         argparser.database_url,
         new_repo_limit=argparser.new_limit,
