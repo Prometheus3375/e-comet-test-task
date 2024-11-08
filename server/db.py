@@ -27,7 +27,7 @@ class PostgreSQLManager:
         if cls.__connection is None:
             url = os.environ.get('DATABASE_URL')
             cls.__connection = await AsyncConnection.connect(url)
-            cls.__connection.read_only = True
+            await cls.__connection.set_read_only(True)
 
         return cls.__connection
 
