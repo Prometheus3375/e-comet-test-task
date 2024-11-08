@@ -1,27 +1,22 @@
-from datetime import date
 from enum import StrEnum
 
-from pydantic import BaseModel, NonNegativeInt, PositiveInt, constr
+from pydantic import PositiveInt
+
+from common.models import *
 
 
-class RepoData(BaseModel):
+class RepoDataWithRank(RepoData, frozen=True):
     """
-    Model for basic repository data.
+    Model for repository data with rank information.
     """
-    repo: constr(min_length=1)
-    owner: constr(min_length=1)
+    repo: RepoFullNameType
     position_cur: PositiveInt
     position_prev: PositiveInt | None
-    stars: NonNegativeInt
-    watchers: NonNegativeInt
-    forks: NonNegativeInt
-    open_issues: NonNegativeInt
-    language: constr(min_length=1) | None
 
 
 class SortByOptions(StrEnum):
     """
-    Options for sorting sequences of :class:`RepoData`.
+    Options for sorting sequences of :class:`RepoDataWithRank`.
     """
     repo = 'repository-name'
     owner = 'owner-name'
@@ -34,13 +29,4 @@ class SortByOptions(StrEnum):
     language = 'language'
 
 
-class RepoActivity(BaseModel):
-    """
-    Model for repository activity.
-    """
-    date: date
-    commits: NonNegativeInt
-    authors: frozenset[constr(min_length=1)]
-
-
-__all__ = 'RepoData', 'RepoActivity', 'SortByOptions'
+__all__ = 'RepoDataWithRank', 'SortByOptions'

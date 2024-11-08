@@ -5,7 +5,8 @@ from typing import final
 from psycopg import AsyncConnection
 from psycopg.rows import DictRow, class_row
 
-from server.models import *
+from common.models import RepoActivity
+from .models import *
 
 
 @final
@@ -40,13 +41,16 @@ class PostgreSQLManager:
             cls.__connection = None
 
     @classmethod
-    async def fetch_top_n(cls, n: int, /) -> list[RepoData]:
+    async def fetch_top_n(cls, n: int, /) -> list[RepoDataWithRank]:
         """
         Fetches the top ``n`` repositories.
         """
         conn = await cls.__connect()
-        async with conn.cursor(row_factory=class_row(RepoData)) as cursor:
-            result = await cursor.execute('')  # todo
+        async with conn.cursor(row_factory=class_row(RepoDataWithRank)) as cursor:
+            result = await cursor.execute(
+                '',
+                dict(n=n),
+                )  # todo
             return await result.fetchall()
 
     @classmethod
