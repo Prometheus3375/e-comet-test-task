@@ -21,7 +21,7 @@ def main() -> None:
         )
     argparser.add_argument(
         '--github-token',
-        help='The github token used for authentication to increase rate limit.\n'
+        help='An authentication token for GitHub for increasing API rate limits.\n'
              'Defaults to None.\n'
              'More on GitHub API rate limits: '
              'https://docs.github.com/en/rest/using-the-rest-api'
