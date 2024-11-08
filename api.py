@@ -50,12 +50,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.get('/api/repos/top100')
-async def api_get_top_100(*, sort_by: SortByOptions = SortByOptions.stars) -> list[RepoData]:
+async def api_get_top_100(
+        *,
+        sort_by: SortByOptions = SortByOptions.stars,
+        descending: bool = False,
+        ) -> list[RepoDataWithRank]:
     """
-    Returns the current top 100 repositories sorted by the specified option.
+    Returns the current top 100 repositories
+    sorted by the specified option in the specified order.
     """
     result = await PostgreSQLManager.fetch_top_n(100)
-    result.sort(key=attrgetter(sort_by.name))
+    result.sort(key=attrgetter(sort_by.name), reverse=descending)
     return result
 
 
