@@ -37,11 +37,13 @@ def update_activity(
             cursor.execute(
                 """
                 insert into
-                activity (repo_id, date, commits, authors)
-                values (%(id)s, %(date)s, %(commits)s, %(authors)s)
+                    activity (repo_id, date, commits, authors)
+                    values (%(id)s, %(date)s, %(commits)s, %(authors)s)
                 on conflict on constraint repo_id_date_tuple
                 do update
-                set commits = %(commits)s, authors = %(authors)s
+                    set commits = %(commits)s, authors = %(authors)s
+                    -- Avoid updates if data is unchanged
+                    where commits <> %(commits)s or authors <> %(authors)s
                 """,
                 dict(
                     id=repo_id,
@@ -99,13 +101,14 @@ def update_database(
                 using (
                     select id, rank() over (order by stars desc) as p
                     from repositories
-                    ) as current_rank
-                on current_rank.id = previous_places.repo_id
-                when matched then
-                  update set place = p
-                when not matched then
-                  insert (repo_id, place)
-                  values (current_rank.id, current_rank.p);
+                    ) as current_places
+                on current_places.id = previous_places.repo_id
+                -- Avoid updates if data is unchanged
+                when matched and place <> p then
+                    update set place = p
+                when not matched then  -- when not matched by target
+                    insert (repo_id, place)
+                    values (current_places.id, current_places.p);
                 commit;
                 """
                 )
