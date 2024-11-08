@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from datetime import date, datetime
 from http.client import HTTPResponse
 from logging import getLogger
-from math import ceil, inf
+from math import ceil
 from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -21,6 +21,9 @@ _headers = {
 _github_token = os.environ.get('GITHUB_TOKEN')
 if _github_token:
     _headers['Authorization'] = f'Bearer {_github_token}'
+    from common.logging import init_logging
+
+    init_logging()
     logger.info(f'GitHub token successfully added to request headers')
 
 
