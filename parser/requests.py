@@ -117,9 +117,10 @@ def parse_commit(commit: dict[str, Any]) -> tuple[date, str | None] | None:
     Returns ``None``, if date of commit is not present.
     """
     # Use commiter instead of author as the former is actually the one who contributed.
+    # Also, GitHub sorts commits by the date commited, not authored.
     # For example
     # https://api.github.com/repos/RSamokhin/tslint/commits?since=2014-04-13&until=2014-04-14
-    # 4th commit has author '=', commit was also authored
+    # 4th commit has author '=', commit was also authored a month earlier.
     commit_author = commit['commit']['commiter']
     if commit_author:
         commit_dt = commit_author.get('date')
