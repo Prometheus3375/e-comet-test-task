@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 
+from common.models import RepoActivity
 from server.db import PostgreSQLManager
 from server.models import *
 
@@ -67,9 +68,9 @@ async def api_get_activity(
         until: date | None = None,
         ) -> list[RepoActivity]:
     """
-    Returns the activity for a repository of the given owner in the specified range of dates.
-    Bounds are inclusive; for fetching activity for a single
-    date ``since`` and ``until`` must be the same.
+    Returns the activity in a repository of the given owner in the specified range of dates.
+    Bounds are inclusive; parameters ``since`` and ``until`` must be the same
+    for fetching activity for a single date.
     """
     return await PostgreSQLManager.fetch_activity(
         owner=owner,
