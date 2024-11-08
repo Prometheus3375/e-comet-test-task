@@ -111,6 +111,27 @@ def request_public_repositories(
                 curr += 1
 
 
+def parse_commit(commit: dict[str, Any]) -> tuple[date, str | None] | None:
+    """
+    Parses commit object from GitHub API into commit date and author name.
+    Returns ``None``, if date of commit is not present.
+    """
+    # Use commiter instead of author as the former is actually the one who contributed.
+    # For example
+    # https://api.github.com/repos/RSamokhin/tslint/commits?since=2014-04-13&until=2014-04-14
+    # 4th commit has author '=', commit was also authored
+    commit_author = commit['commit']['commiter']
+    if commit_author:
+        commit_dt = commit_author.get('date')
+        if commit_dt:
+            commit_dt = datetime.fromisoformat(commit_dt)
+            commit_date = date(commit_dt.year, commit_dt.month, commit_dt.day)
+            author_name = commit_author.get('name')
+            return commit_date, author_name
+
+    return None
+
+
 def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[RepoActivity]:
     """
     Requests activity since the given date for the specified repository from GitHub API
@@ -135,7 +156,7 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
 
     # Request commits per 100 (max) per page
     pages_count = ceil(commits_total / 100)
-    # Commits are returned sorted in descending order
+    # Commits are returned in descending order sorted by commited date
     last_date: date | None = None
     commit_count = 0
     authors = set()
@@ -155,31 +176,29 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
             return
 
         for commit in data:
-            commit_author = commit['commit']['author']
-            if commit_author:
-                commit_dt = commit_author.get('date')
-                if commit_dt:
-                    commit_dt = datetime.fromisoformat(commit_dt)
-                    commit_date = date(commit_dt.year, commit_dt.month, commit_dt.day)
-                    if last_date != commit_date:
-                        if last_date is None:
-                            # This is the very first date
-                            last_date = commit_date
-                        else:
-                            # This date is different from the last date,
-                            # yield activity, then reset counter and set
-                            yield RepoActivity(
-                                date=last_date,
-                                commits=commit_count,
-                                authors=authors,
-                                )
-                            commit_count = 0
-                            authors = set()
+            date_author = parse_commit(commit)
+            if not date_author: continue
 
-                    commit_count += 1
-                    author_name = commit_author.get('name')
-                    if author_name and len(author_name) <= MAX_AUTHOR_NAME_LENGTH:
-                        authors.add(author_name)
+            commit_date, author_name = date_author
+            if last_date != commit_date:
+                if last_date is None:
+                    # This is the very first date
+                    last_date = commit_date
+                else:
+                    # This date is different from the last date, yield activity
+                    yield RepoActivity(
+                        date=last_date,
+                        commits=commit_count,
+                        authors=authors,
+                        )
+                    # Set last date to the new date, reset commit count and authors
+                    last_date = commit_date
+                    commit_count = 0
+                    authors = set()
+
+            commit_count += 1
+            if author_name and len(author_name) <= MAX_AUTHOR_NAME_LENGTH:
+                authors.add(author_name)
 
     # Yield activity for the remaining date
     if commit_count > 0:
