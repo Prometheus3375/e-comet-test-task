@@ -18,13 +18,16 @@ _headers = {
     'Accept':               'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
     }
+
 _github_token = os.environ.get('GITHUB_TOKEN')
 if _github_token:
     _headers['Authorization'] = f'Bearer {_github_token}'
     from common.logging import init_logging
 
     init_logging()
-    logger.info(f'GitHub token successfully added to request headers')
+    logger.info(f'GitHub token is successfully added to request headers')
+
+del _github_token
 
 
 def make_request(url: str, /) -> Request:
