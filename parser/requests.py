@@ -142,7 +142,8 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
     and yields :class:`RepoActivity` instances.
     """
     # Retrieve total commit count
-    # https://stackoverflow.com/a/70610670/14369408
+    # Ref: https://stackoverflow.com/a/70610670/14369408
+    # Parameter since is inclusive here up to seconds.
     url = (
         f'https://api.github.com/repos/{owner}/{repo}/commits'
         f'?since={since}&per_page=1'
@@ -151,16 +152,25 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
         response: HTTPResponse
         with urlopen(make_request(url)) as response:
             link = response.getheader('Link')
+            # If there is no link for the very first page,
+            # then the number of (new) commits is zero.
+            # Here is the project with 1 commit in main (yet):
+            # https://github.com/Prometheus3375/wc3-generation
+            # The first page has the commit and link header,
+            # the next is empty and no header.
+            if link is None: return
+
             _, _, number_rel = link.rpartition('page=')
             number, _, _ = number_rel.partition('>')
             commits_total = int(number)
+
     except HTTPError:
         logger.exception(f'Cannot request activity for repository {owner}/{repo}')
         return
 
     # Request commits per 100 (max) per page
     pages_count = ceil(commits_total / 100)
-    # Commits are returned in descending order sorted by commited date
+    # Commits are returned sorted by commited date in descending order
     last_date: date | None = None
     commit_count = 0
     authors = set()
