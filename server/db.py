@@ -1,12 +1,15 @@
-import os
 from datetime import date
+from logging import getLogger
 from typing import LiteralString, final
 
 from psycopg import AsyncConnection
-from psycopg.rows import DictRow, class_row
+from psycopg.conninfo import conninfo_to_dict
+from psycopg.rows import class_row
 
 from common.models import RepoActivity
 from .models import *
+
+logger = getLogger(__name__)
 
 
 @final
@@ -17,15 +20,26 @@ class PostgreSQLManager:
     def __init__(self, /) -> None:
         raise TypeError(f'cannot instantiate {self.__class__.__name__}')
 
-    __connection: AsyncConnection[DictRow] | None = None
+    __connection: AsyncConnection | None = None
 
     @classmethod
-    async def __connect(cls, /) -> AsyncConnection[DictRow]:
+    async def __connect(cls, /) -> AsyncConnection:
         """
         Establishes connection to a database or returns an existing one.
         """
         if cls.__connection is None:
+            import os
+
             url = os.environ.get('DATABASE_URL')
+            if not url:
+                raise ValueError('environmental variable DATABASE_URL must be set')
+
+            parsed = conninfo_to_dict(url)
+            logger.info(
+                f"Connecting to the database "
+                f"postgresql://{parsed['user']}:REDACTED@"
+                f"{parsed['host']}:{parsed['port']}/{parsed['database']}"
+                )
             cls.__connection = await AsyncConnection.connect(url)
             await cls.__connection.set_read_only(True)
 
