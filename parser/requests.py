@@ -66,8 +66,11 @@ def request_repo(owner: str, repo: str, /) -> RepoData | None:
             open_issues=data['open_issues_count'],
             language=data['language'],
             )
-    except (HTTPError, ValidationError):
-        logger.exception(f'Cannot request information for repository {owner}/{repo}')
+    except HTTPError as e:
+        logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
+        return None
+    except ValidationError as e:
+        logger.error(str(e))
         return None
 
 
@@ -95,10 +98,10 @@ def request_public_repositories(
         try:
             # Parameter since excludes the repository with such id from the result
             data = request_data(f'https://api.github.com/repositories?since={last_id}')
-        except HTTPError:
-            logger.exception(f'Cannot request information for public repositories since {last_id}')
+        except HTTPError as e:
+            logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
             # Exit immediately
-            break
+            return
 
         for repo in data:
             if curr >= limit: break
@@ -164,8 +167,8 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
             number, _, _ = number_rel.partition('>')
             commits_total = int(number)
 
-    except HTTPError:
-        logger.exception(f'Cannot request activity for repository {owner}/{repo}')
+    except HTTPError as e:
+        logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
         return
 
     # Request commits per 100 (max) per page
@@ -183,8 +186,8 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
         # https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits
         try:
             data = request_data(url)
-        except HTTPError:
-            logger.exception(f'Cannot request activity for repository {owner}/{repo}')
+        except HTTPError as e:
+            logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
             return
 
         for commit in data:
