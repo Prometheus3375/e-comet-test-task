@@ -40,7 +40,7 @@ if __name__ == '__main__':
         '--new-since',
         type=int,
         default=DEFAULT_AFTER_GITHUB_ID,
-        help=f'GitHub repository ID after which new repositories will be fetched.\n'
+        help=f'GitHub repository ID after which new repositories are fetched.\n'
              f'Defaults to {DEFAULT_AFTER_GITHUB_ID} '
              f'which is just before ID for Prometheus3375/dim-wishlist.',
         )
