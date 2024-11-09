@@ -55,7 +55,7 @@ def update_activity(
 
 
 def update_database(
-        database_url: str,
+        database_uri: str,
         /,
         new_repo_limit: int | None,
         after_github_id: int,
@@ -63,7 +63,7 @@ def update_database(
     """
     Updates the database with new information about repositories and their activity.
 
-    :param database_url: URL to the database.
+    :param database_uri: URI of the database.
     :param new_repo_limit: The maximum number of new repositories to fetch from GitHub API.
         Can be ``None`` to fetch an unlimited number of repositories.
     :param after_github_id: Any new repository will have GitHub ID higher than this value.
@@ -87,7 +87,7 @@ def update_database(
     after_github_id = max(0, after_github_id)
 
     conn: Connection[TupleRow]
-    with Connection.connect(database_url) as conn:
+    with Connection.connect(database_uri) as conn:
         # Step 1: evaluate current top and save to previous_places
         # The latest top always evaluated on demand;
         # while the database updating, the top at the beginning of update will become obsolete

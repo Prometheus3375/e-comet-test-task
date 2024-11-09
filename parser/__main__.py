@@ -16,8 +16,8 @@ def main() -> None:
         help='If specified, the script shows this help message and exits.',
         )
     argparser.add_argument(
-        'database_url',
-        help='The URL to PostreSQL database to update.',
+        'database_uri',
+        help='The URI of PostreSQL database to update.',
         )
     argparser.add_argument(
         '--github-token',
@@ -53,7 +53,7 @@ def main() -> None:
 
     init_logging()
     update_database(
-        argparser.database_url,
+        argparser.database_uri,
         new_repo_limit=argparser.new_limit,
         after_github_id=argparser.new_since,
         )

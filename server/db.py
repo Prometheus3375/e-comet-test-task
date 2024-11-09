@@ -30,17 +30,17 @@ class PostgreSQLManager:
         if cls.__connection is None:
             import os
 
-            url = os.environ.get('DATABASE_URL')
-            if not url:
-                raise ValueError('environmental variable DATABASE_URL must be set')
+            uri = os.environ.get('DATABASE_URI')
+            if not uri:
+                raise ValueError('environmental variable DATABASE_URI must be set')
 
-            parsed = conninfo_to_dict(url)
+            parsed = conninfo_to_dict(uri)
             logger.info(
                 f"Connecting to the database "
                 f"postgresql://{parsed['user']}:REDACTED@"
                 f"{parsed['host']}:{parsed['port']}/{parsed['database']}"
                 )
-            cls.__connection = await AsyncConnection.connect(url)
+            cls.__connection = await AsyncConnection.connect(uri)
             await cls.__connection.set_read_only(True)
 
         return cls.__connection
