@@ -119,7 +119,7 @@ def update_database(
         with conn.cursor() as existing_repos:
             existing_repos.execute(
                 """
-                select id, repo, owner, last_activity_date
+                select id, owner, repo, last_activity_date
                 from repositories
                 left join
                 (
