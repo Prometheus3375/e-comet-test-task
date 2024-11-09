@@ -1,0 +1,9 @@
+# Ignore everything
+**
+
+# Except
+!/common/**/*.py
+!/server/**/*.py
+!/api.py
+!/entrypoint.sh
+!/requirements.in
