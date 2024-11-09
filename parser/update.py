@@ -133,7 +133,7 @@ def update_database(
 
             updated = set()
             for repo_id, owner, repo, last_activity_date in existing_repos:
-                # Add to updated regardless of request result
+                # Add to updated regardless of the request result
                 # as inserting an existing repo later will cause an error
                 full_name = f'{owner}/{repo}'
                 updated.add(full_name)
@@ -217,7 +217,10 @@ def update_database(
                         """,
                         repo_data.model_dump(),
                         )
-                    repo_id = cursor.fetchone()[0]
+                    row = cursor.fetchone()
+                    # row shouldn't be None, but just in case
+                    if row is None: continue
+                    repo_id = row[0]
 
                 # Insert activity
                 update_activity(conn, repo_id, owner=repo_data.owner, repo=repo_data.repo)
