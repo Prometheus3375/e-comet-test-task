@@ -25,21 +25,22 @@ if _github_token:
     from common.logging import init_logging
 
     init_logging()
-    logger.info(f'GitHub token is successfully added to request headers')
+    logger.info(f'GitHub token is successfully added to headers')
 
 del _github_token
 
 
 def make_request(url: str, /) -> Request:
     """
-    Creates request with default headers for GitHub API.
+    Creates a request with default headers for GitHub API.
     """
     return Request(url, headers=_headers)
 
 
 def request_data(url: str, /) -> Any:
     """
-    Creates request with default headers for GitHub API and returns JSON data from response.
+    Creates a request with default headers for GitHub API
+    and returns JSON data from the response.
     """
     response: HTTPResponse
     with urlopen(make_request(url)) as response:
@@ -119,8 +120,8 @@ def request_public_repositories(
 
 def parse_commit(commit: dict[str, Any]) -> tuple[date, str | None] | None:
     """
-    Parses commit object from GitHub API into commit date and author name.
-    Returns ``None``, if date of commit is not present.
+    Parses a commit object from GitHub API into commit date and author name.
+    Returns ``None``, if commit date is not present.
     """
     # Use committer instead of author as the former is actually the one who contributed.
     # Also, GitHub sorts commits by the date committed, not authored.
@@ -171,7 +172,7 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
         logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
         return
 
-    # Request commits per 100 (max) per page
+    # Request 100 (max) commits per page
     pages_count = ceil(commits_total / 100)
     # Commits are returned sorted by committed date in descending order
     last_date: date | None = None

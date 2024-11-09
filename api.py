@@ -58,6 +58,8 @@ async def api_get_top_100(
     """
     Returns the current top 100 repositories
     sorted by the specified option in the specified order.
+
+    The place is determined by the number of stargazers.
     """
     result = await PostgreSQLManager.fetch_top_n(100)
     result.sort(key=attrgetter(sort_by.name), reverse=descending)
@@ -73,9 +75,9 @@ async def api_get_activity(
         until: date | None = None,
         ) -> list[RepoActivity]:
     """
-    Returns the activity in a repository of the given owner in the specified range of dates.
+    Returns the activity inside the given repository in the specified range of dates.
     Bounds are inclusive; parameters ``since`` and ``until`` must be the same
-    for fetching activity for a single date.
+    for fetching the activity for a single day.
     """
     return await PostgreSQLManager.fetch_activity(
         owner=owner,

@@ -21,11 +21,11 @@ def update_activity(
         ) -> None:
     """
     Fetches activity information from GitHub API for the specified repository
-    and updates the database with new information.
+    and updates the database with the new information.
 
     :param conn: An active connection to the database.
     :param repo_id: ID of the repository in the database.
-    :param owner: Name of thw owner of the repository.
+    :param owner: Name of the owner of the repository.
     :param repo: Name of the repository.
     :param last_activity_date: A date from which start requesting activity information.
         If ``None``, fetches all available information.
@@ -63,7 +63,7 @@ def update_database(
         after_github_id: int,
         ) -> None:
     """
-    Updates the database with new information about repositories and their activity.
+    Updates the database with the new information about repositories and their activity.
 
     :param database_uri: URI of the database.
     :param new_repo_limit: The maximum number of new repositories to fetch from GitHub API.

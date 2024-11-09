@@ -15,7 +15,7 @@ logger = getLogger(__name__)
 @final
 class PostgreSQLManager:
     """
-    A class for managing connections to PostgreSQL databases.
+    A class for managing connections to PostgreSQL database.
     """
     def __init__(self, /) -> None:
         raise TypeError(f'cannot instantiate {self.__class__.__name__}')
@@ -25,7 +25,7 @@ class PostgreSQLManager:
     @classmethod
     async def __connect(cls, /) -> AsyncConnection:
         """
-        Establishes connection to a database or returns an existing one.
+        Establishes a connection to the database or returns the existing one.
         """
         if cls.__connection is None:
             import os
@@ -58,6 +58,7 @@ class PostgreSQLManager:
     async def fetch_top_n(cls, n: int, /) -> list[RepoDataWithRank]:
         """
         Fetches the top ``n`` repositories.
+        The place is determined by the number of stargazers.
         """
         conn = await cls.__connect()
         async with conn.cursor(row_factory=class_row(RepoDataWithRank)) as cursor:
@@ -120,7 +121,7 @@ class PostgreSQLManager:
             until: date | None,
             ) -> list[RepoActivity]:
         """
-        Fetches the activity for a repository with the given owner for the specified period.
+        Fetches the activity for the repository with the given owner for the specified period.
         """
         query: LiteralString
         if since is None and until is None:
