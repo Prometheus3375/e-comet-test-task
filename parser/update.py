@@ -14,6 +14,7 @@ def update_activity(
         conn: Connection[TupleRow],
         repo_id: int,
         /,
+        *,
         owner: str,
         repo: str,
         last_activity_date: date | None = None,
@@ -57,6 +58,7 @@ def update_activity(
 def update_database(
         database_uri: str,
         /,
+        *,
         new_repo_limit: int | None,
         after_github_id: int,
         ) -> None:
@@ -112,6 +114,7 @@ def update_database(
                 commit;
                 """
                 )
+
         logger.info('Step 1: complete')
 
         # Step 2: update existing repos
