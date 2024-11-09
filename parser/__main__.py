@@ -1,5 +1,6 @@
-def main() -> None:
+if __name__ == '__main__':
     from argparse import ArgumentParser, RawTextHelpFormatter
+    from parser.defaults import *
     import parser
 
     argparser = ArgumentParser(
@@ -23,6 +24,7 @@ def main() -> None:
         '--github-token',
         help='An authentication token for GitHub for increasing API rate limits.\n'
              'Defaults to None.\n'
+             'GitHub token can also be set via "GITHUB_TOKEN" environmental variable.\n\n'
              'More on GitHub API rate limits: '
              'https://docs.github.com/en/rest/using-the-rest-api'
              '/rate-limits-for-the-rest-api?apiVersion=2022-11-28',
@@ -30,16 +32,17 @@ def main() -> None:
     argparser.add_argument(
         '--new-limit',
         type=int,
-        default=None,
+        default=DEFAULT_NEW_REPO_LIMIT,
         help='The maximum number of new repositories added to the database.\n'
              'Defaults to None which means no limit.',
         )
     argparser.add_argument(
         '--new-since',
         type=int,
-        default=815_368_990,
-        help='GitHub repository ID after which new repositories will be fetched.\n'
-             'Defaults to 815368990 which is just before ID for Prometheus3375/dim-wishlist.',
+        default=DEFAULT_AFTER_GITHUB_ID,
+        help=f'GitHub repository ID after which new repositories will be fetched.\n'
+             f'Defaults to {DEFAULT_AFTER_GITHUB_ID} '
+             f'which is just before ID for Prometheus3375/dim-wishlist.',
         )
 
     argparser = argparser.parse_args()
@@ -57,7 +60,3 @@ def main() -> None:
         new_repo_limit=argparser.new_limit,
         after_github_id=argparser.new_since,
         )
-
-
-if __name__ == '__main__':
-    main()
