@@ -38,7 +38,7 @@ class PostgreSQLManager:
             logger.info(
                 f"Connecting to the database "
                 f"postgresql://{parsed['user']}:REDACTED@"
-                f"{parsed['host']}:{parsed['port']}/{parsed['database']}"
+                f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
                 )
             cls.__connection = await AsyncConnection.connect(uri)
             await cls.__connection.set_read_only(True)
