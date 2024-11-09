@@ -120,7 +120,7 @@ def parse_commit(commit: dict[str, Any]) -> tuple[date, str | None] | None:
     Returns ``None``, if date of commit is not present.
     """
     # Use committer instead of author as the former is actually the one who contributed.
-    # Also, GitHub sorts commits by the date commited, not authored.
+    # Also, GitHub sorts commits by the date committed, not authored.
     # For example
     # https://api.github.com/repos/RSamokhin/tslint/commits?since=2014-04-13&until=2014-04-14
     # 4th commit has author '=', commit was also authored a month earlier.
@@ -170,12 +170,10 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
 
     # Request commits per 100 (max) per page
     pages_count = ceil(commits_total / 100)
-    # Commits are returned sorted by commited date in descending order
+    # Commits are returned sorted by committed date in descending order
     last_date: date | None = None
     commit_count = 0
     authors = set()
-    # date2count = Counter()
-    # date2authors = defaultdict(set)
     for page in range(1, pages_count + 1):
         url = (
             f'https://api.github.com/repos/{owner}/{repo}/commits'
