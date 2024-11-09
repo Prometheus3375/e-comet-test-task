@@ -43,7 +43,7 @@ def update_activity(
                 do update
                     set commits = %(commits)s, authors = %(authors)s
                     -- Avoid updates if data is unchanged
-                    where commits <> %(commits)s or authors <> %(authors)s
+                    where activity.commits <> %(commits)s or activity.authors <> %(authors)s
                 """,
                 dict(
                     id=repo_id,
