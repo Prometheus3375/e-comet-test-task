@@ -26,11 +26,15 @@ def handler(event: dict[str, Any], context) -> dict[str, Any]:
     Handler for Yandex Cloud function.
     """
     database_uri = os.environ.get('DATABASE_URI')
+    skip_rank_update = os.environ.get('SKIP_RANK_UPDATE')
+    skip_repo_update = os.environ.get('SKIP_REPO_UPDATE')
     new_repo_limit = os.environ.get('NEW_REPO_LIMIT', DEFAULT_NEW_REPO_LIMIT)
     after_github_id = os.environ.get('NEW_REPO_SINCE', DEFAULT_AFTER_GITHUB_ID)
 
     update_database(
         database_uri,
+        skip_rank_update=bool(skip_rank_update),
+        skip_repo_update=bool(skip_repo_update),
         new_repo_limit=int_or_none(new_repo_limit),
         after_github_id=int_or_none(after_github_id),
         )
