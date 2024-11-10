@@ -53,10 +53,10 @@ def request_repo(owner: str, repo: str, /) -> RepoData | None:
     and returns respective :class:`RepoData` instance.
     Returns ``None`` if request fails or returns invalid data.
     """
-    # Response schema:
-    # https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#get-a-repository
     try:
         data = request_data(f'https://api.github.com/repos/{owner}/{repo}')
+        # Response schema:
+        # https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#get-a-repository
         return RepoData(
             id=data['id'],
             repo=repo,
@@ -94,8 +94,6 @@ def request_public_repositories(
     last_id = after_github_id
     curr = 0
     while curr < limit:
-        # Response schema:
-        # https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-public-repositories
         try:
             # Parameter since excludes the repository with such id from the result
             data = request_data(f'https://api.github.com/repositories?since={last_id}')
@@ -104,6 +102,8 @@ def request_public_repositories(
             # Exit immediately
             return
 
+        # Response schema:
+        # https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28#list-public-repositories
         for repo in data:
             if curr >= limit: break
 
@@ -123,6 +123,8 @@ def parse_commit(commit: dict[str, Any]) -> tuple[date, str | None] | None:
     Parses a commit object from GitHub API into commit date and author name.
     Returns ``None``, if commit date is not present.
     """
+    # Response schema:
+    # https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits
     # Use committer instead of author as the former is actually the one who contributed.
     # Also, GitHub sorts commits by the date committed, not authored.
     # For example
@@ -183,8 +185,6 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
             f'https://api.github.com/repos/{owner}/{repo}/commits'
             f'?since={since}&per_page=100&page={page}'
         )
-        # Response schema:
-        # https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-commits
         try:
             data = request_data(url)
         except HTTPError as e:
