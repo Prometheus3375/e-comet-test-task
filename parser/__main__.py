@@ -30,14 +30,25 @@ if __name__ == '__main__':
              '/rate-limits-for-the-rest-api?apiVersion=2022-11-28',
         )
     argparser.add_argument(
-        '--new-limit',
+        '--skip-rank-update',
+        action='store_true',
+        help='If specified, the script does not update previous places of repositories.',
+        )
+    argparser.add_argument(
+        '--skip-repo-update',
+        action='store_true',
+        help='If specified, the script does not update '
+             'general and activity information of repositories.',
+        )
+    argparser.add_argument(
+        '--new-repo-limit',
         type=int,
         default=DEFAULT_NEW_REPO_LIMIT,
         help='The maximum number of new repositories added to the database.\n'
              'Defaults to None which means no limit.',
         )
     argparser.add_argument(
-        '--new-since',
+        '--new-repo-since',
         type=int,
         default=DEFAULT_AFTER_GITHUB_ID,
         help=f'GitHub repository ID after which new repositories are fetched.\n'
@@ -45,18 +56,20 @@ if __name__ == '__main__':
              f'which is just before ID for Prometheus3375/dim-wishlist.',
         )
 
-    argparser = argparser.parse_args()
+    params = argparser.parse_args()
     import os
 
     # Set GITHUB_TOKEN before any other import
-    os.environ['GITHUB_TOKEN'] = argparser.github_token
+    os.environ['GITHUB_TOKEN'] = params.github_token
 
     from common.logging import init_logging
     from parser.update import update_database
 
     init_logging()
     update_database(
-        argparser.database_uri,
-        new_repo_limit=argparser.new_limit,
-        after_github_id=argparser.new_since,
+        params.database_uri,
+        skip_rank_update=params.skip_rank_update,
+        skip_repo_update=params.skip_repo_update,
+        new_repo_limit=params.new_repo_limit,
+        after_github_id=params.new_repo_since,
         )
