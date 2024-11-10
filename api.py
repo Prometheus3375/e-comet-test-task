@@ -27,6 +27,9 @@ async def lifespan(_: FastAPI, /):
 app = FastAPI(
     title='Entity Resolution API',
     version='1.0.0',
+    # PyCharm still thinks / is an argument in a function signature,
+    # 5 years has passed since introduction of positional-only specifier,
+    # what a shame.
     lifespan=lifespan,
     )
 logger = getLogger(__name__)
