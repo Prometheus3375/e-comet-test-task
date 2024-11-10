@@ -63,7 +63,9 @@ if __name__ == '__main__':
                 f.write(b'\n'.join(reqs))
                 f.write(b'\n')
 
-            zf.write(os.path.basename(__file__))
+            parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            os.chdir(parent_dir)
+            # zf.write(os.path.basename(__file__))
             for parent_path, dirnames, filenames in os.walk('common'):
                 for filename in filenames:
                     if filename.endswith('.py'):
