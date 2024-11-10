@@ -6,11 +6,11 @@ from psycopg import Connection
 
 def main() -> None:
     parser = ArgumentParser(
-        description='Helper script to create tables in PostreSQL required for this project'
+        description='Helper script to create tables in PostgreSQL required for this project'
         )
     parser.add_argument(
         'database_uri',
-        help='the URI of PostreSQL database where tables will be created',
+        help='the URI of PostgreSQL database where tables will be created',
         )
 
     database_uri = parser.parse_args().database_uri

@@ -18,7 +18,7 @@ if __name__ == '__main__':
         )
     argparser.add_argument(
         'database_uri',
-        help='The URI of PostreSQL database to update.',
+        help='The URI of PostgreSQL database to update.',
         )
     argparser.add_argument(
         '--github-token',
