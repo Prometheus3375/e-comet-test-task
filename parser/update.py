@@ -147,7 +147,7 @@ def update_database(
                     )
 
                 for repo_id, owner, repo, last_activity_date in existing_repos:
-                    # Add to updated regardless of the request result
+                    # Add to updated_repos regardless of the request result
                     # as inserting an existing repo later will cause an error
                     full_name = f'{owner}/{repo}'
                     updated_repos.add(full_name)
@@ -224,7 +224,7 @@ def update_database(
                             , %(open_issues)s
                             , %(language)s
                             )
-                        -- While it is guaranteed that no conflicts appear by set updated,
+                        -- While it is guaranteed that no conflicts appear by set updated_repos,
                         -- still do nothing on conflict.
                         on conflict do nothing
                         returning id;
