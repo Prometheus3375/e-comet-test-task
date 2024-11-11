@@ -126,8 +126,16 @@ def update_database(
             logger.info('Step 1: complete')
 
         # Step 2: update existing repos
-        updated_repos = set()
         if skip_repo_update:
+            with conn.cursor() as existing_repos:
+                existing_repos.execute(
+                    """
+                    select (owner || '/' || repo) as repo
+                    from repositories
+                    """
+                    )
+                updated_repos = {row[0] for row in existing_repos}
+
             logger.info('Step 2 skipped')
         else:
             logger.info('Step 2: update existing repositories')
@@ -146,6 +154,7 @@ def update_database(
                     """
                     )
 
+                updated_repos = set()
                 for repo_id, owner, repo, last_activity_date in existing_repos:
                     # Add to updated_repos regardless of the request result
                     # as inserting an existing repo later will cause an error
