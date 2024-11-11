@@ -22,6 +22,14 @@ def int_or_none(value: Any | None, /) -> int | None:
     return None if value is None else int(value)
 
 
+def truncate(value: str, limit: int, /) -> str:
+    """
+    If the length of the given string is higher than the limit,
+    cuts it to ``limit - 3`` characters and appends ellipsis.
+    """
+    return f'{value[:limit - 3]}...' if len(value) > limit else value
+
+
 class YCFormatter(Formatter):
     """
     Log formatter for Yandex Cloud.
@@ -33,13 +41,11 @@ class YCFormatter(Formatter):
 
         if record.exc_info:
             exc_text = record.exc_text or self.formatException(record.exc_info)
-            message = f'{message}\r{exc_text.rstrip()}'
+            message = f'{message}\n{exc_text.rstrip()}'
 
         if record.stack_info:
             stack_text = self.formatStack(record.stack_info)
-            message = f'{message}\r{stack_text.rstrip()}'
-
-        message = message.replace('\n', '\r')
+            message = f'{message}\n{stack_text.rstrip()}'
 
         match record.levelname:
             case 'WARNING': level = 'WARN'
@@ -47,9 +53,10 @@ class YCFormatter(Formatter):
             case lvl: level = lvl
 
         msg = dict(
-            msg=message,
+            message=message,
             level=level,
             logger=record.name,
+            stream_name=truncate(record.name, 63),
             )
         return json.dumps(msg)
 
