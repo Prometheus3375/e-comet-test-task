@@ -4,6 +4,7 @@
 # Except
 !/common/**/*.py
 !/server/**/*.py
+!/server/logging-config.json
 !/api.py
 !/entrypoint.sh
 !/requirements.in

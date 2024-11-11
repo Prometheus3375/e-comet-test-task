@@ -15,11 +15,7 @@ from server.models import *
 @asynccontextmanager
 async def lifespan(_: FastAPI, /):
     # Actions on startup
-    from common.logging import init_logging
-
-    init_logging()
     yield
-
     # Actions on shutdown
     await PostgreSQLManager.close()
 
