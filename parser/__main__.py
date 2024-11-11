@@ -60,7 +60,13 @@ if __name__ == '__main__':
     from parser.logging import init_logging
     from parser.update import update_database
 
-    init_logging()
+    init_logging(
+        Formatter(
+            fmt='{asctime} [{name}] {levelname:<8} {message}',
+            datefmt='%Y-%m-%d %H:%M:%S',
+            style='{',
+            )
+        )
     update_database(
         params.database_uri,
         params.github_token,

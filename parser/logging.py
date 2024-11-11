@@ -3,24 +3,21 @@ from threading import RLock
 
 _called = False
 _lock = RLock()
-_default_formatter = Formatter(
-    '%(asctime)s [%(name)s] %(levelname)s    %(message)s',
-    '%Y-%m-%d %H:%M:%S',
-    )
 
 
 def init_logging(
+        formatter: Formatter,
+        /,
         *,
         level: str = 'INFO',
-        formatter: Formatter = _default_formatter,
-        use_new_handler: bool = True,
+        use_new_handler: bool = True
         ) -> None:
     """
     Initializes Python logging with the specified level and formatter.
     If called more than once, this function is no-op.
 
-    :param level: The level of logging. Defaults to ``INFO``.
     :param formatter: The formatter for log records.
+    :param level: The level of logging. Defaults to ``INFO``.
     :param use_new_handler: If ``True``, then creates a new logging handler.
       Otherwise, uses the first handler of the root logger.
     """

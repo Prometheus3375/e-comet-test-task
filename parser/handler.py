@@ -4,6 +4,8 @@ from logging import Formatter, LogRecord, getLogger
 from typing import Any, overload
 
 from parser.defaults import *
+from parser.logging import init_logging
+from parser.update import update_database
 
 logger = getLogger(__name__)
 
@@ -67,11 +69,7 @@ def handler(_, __, /) -> dict[str, Any]:
     """
     Handler for Yandex Cloud function.
     """
-    from common.logging import init_logging
-
-    init_logging(formatter=YCFormatter(), use_new_handler=False)
-
-    from parser.update import update_database
+    init_logging(YCFormatter(), use_new_handler=False)
 
     database_uri = os.environ.get('DATABASE_URI')
     github_token = os.environ.get('GITHUB_TOKEN')
