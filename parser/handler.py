@@ -1,4 +1,6 @@
+import json
 import os
+from logging import Formatter, LogRecord
 from typing import Any, overload
 
 from parser.defaults import *
@@ -20,10 +22,46 @@ def int_or_none(value: Any | None, /) -> int | None:
     return None if value is None else int(value)
 
 
-def handler(event: dict[str, Any], context) -> dict[str, Any]:
+class YCFormatter(Formatter):
+    """
+    Log formatter for Yandex Cloud.
+    """
+    __slots__ = ()
+
+    def format(self, record: LogRecord, /) -> str:
+        message = record.getMessage().rstrip()
+
+        if record.exc_info:
+            exc_text = record.exc_text or self.formatException(record.exc_info)
+            message = f'{message}\r{exc_text.rstrip()}'
+
+        if record.stack_info:
+            stack_text = self.formatStack(record.stack_info)
+            message = f'{message}\r{stack_text.rstrip()}'
+
+        message = message.replace('\n', '\r')
+
+        match record.levelname:
+            case 'WARNING': level = 'WARN'
+            case 'CRITICAL': level = 'FATAL'
+            case lvl: level = lvl
+
+        msg = dict(
+            msg=message,
+            level=level,
+            logger=record.name,
+            )
+        return json.dumps(msg)
+
+
+def handler(event, context) -> dict[str, Any]:
     """
     Handler for Yandex Cloud function.
     """
+    from common.logging import init_logging
+
+    init_logging(formatter=YCFormatter(), use_new_handler=False)
+
     from parser.update import update_database
 
     database_uri = os.environ.get('DATABASE_URI')
