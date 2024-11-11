@@ -2,7 +2,6 @@ import os
 from typing import Any, overload
 
 from parser.defaults import *
-from parser.update import update_database
 
 
 @overload
@@ -25,6 +24,8 @@ def handler(event: dict[str, Any], context) -> dict[str, Any]:
     """
     Handler for Yandex Cloud function.
     """
+    from parser.update import update_database
+
     database_uri = os.environ.get('DATABASE_URI')
     skip_rank_update = os.environ.get('SKIP_RANK_UPDATE')
     skip_repo_update = os.environ.get('SKIP_REPO_UPDATE')
