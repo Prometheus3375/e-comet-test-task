@@ -177,6 +177,9 @@ then its URI provided above is not accessible from other containers.
     - The container should be re-added to the network if it is recreated.
       This can be done manually or by adding next code to the end of `compose.yaml`.
       ```yaml
+      services:
+        server:
+          # Present server config goes here
           networks:
             - local-net
 
