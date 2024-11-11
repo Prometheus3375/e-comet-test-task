@@ -108,7 +108,9 @@ def update_database(
     # endregion
 
     conn: Connection[TupleRow]
-    with Connection.connect(database_uri) as conn:
+    # Specify autocommit, so all transactions are not nested transactions
+    # https://www.psycopg.org/psycopg3/docs/basic/transactions.html#transaction-contexts
+    with Connection.connect(database_uri, autocommit=True) as conn:
         # Step 1: evaluate current top and save to previous_places
         # The latest top always evaluated on demand;
         # while the database updating, the top at the beginning of update will become obsolete
