@@ -74,6 +74,7 @@ def handler(_, __, /) -> dict[str, Any]:
     from parser.update import update_database
 
     database_uri = os.environ.get('DATABASE_URI')
+    github_token = os.environ.get('GITHUB_TOKEN')
     skip_rank_update = os.environ.get('SKIP_RANK_UPDATE')
     skip_repo_update = os.environ.get('SKIP_REPO_UPDATE')
     new_repo_limit = os.environ.get('NEW_REPO_LIMIT', DEFAULT_NEW_REPO_LIMIT)
@@ -82,6 +83,7 @@ def handler(_, __, /) -> dict[str, Any]:
     try:
         update_database(
             database_uri,
+            github_token,
             skip_rank_update=bool(skip_rank_update),
             skip_repo_update=bool(skip_repo_update),
             new_repo_limit=int_or_none(new_repo_limit),

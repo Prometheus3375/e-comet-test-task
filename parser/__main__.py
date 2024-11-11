@@ -22,9 +22,8 @@ if __name__ == '__main__':
         )
     argparser.add_argument(
         '--github-token',
-        help='An authentication token for GitHub for increasing API rate limits.\n'
-             'Defaults to None.\n'
-             'GitHub token can also be set via "GITHUB_TOKEN" environmental variable.\n\n'
+        help='A GitHub authentication token for increasing API rate limits.\n'
+             'Defaults to None.\n\n'
              'More on GitHub API rate limits: '
              'https://docs.github.com/en/rest/using-the-rest-api'
              '/rate-limits-for-the-rest-api?apiVersion=2022-11-28',
@@ -57,17 +56,14 @@ if __name__ == '__main__':
         )
 
     params = argparser.parse_args()
-    import os
-
-    # Set GITHUB_TOKEN before any other import
-    os.environ['GITHUB_TOKEN'] = params.github_token
-
-    from common.logging import init_logging
+    from logging import Formatter
+    from parser.logging import init_logging
     from parser.update import update_database
 
     init_logging()
     update_database(
         params.database_uri,
+        params.github_token,
         skip_rank_update=params.skip_rank_update,
         skip_repo_update=params.skip_repo_update,
         new_repo_limit=params.new_repo_limit,
