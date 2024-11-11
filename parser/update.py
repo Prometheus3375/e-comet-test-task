@@ -204,7 +204,10 @@ def update_database(
                             repo=repo,
                             last_activity_date=last_activity_date,
                             )
-                        logger.info(f'Updated repository {repo_id} {full_name!r}')
+                        logger.info(
+                            f'Updated repository {repo_id} '
+                            f'https://github.com/{owner}/{repo}'
+                            )
 
             logger.info('Step 2: complete')
 
@@ -247,8 +250,10 @@ def update_database(
 
                 # Insert activity
                 update_activity(conn, repo_id, owner=repo_data.owner, repo=repo_data.repo)
-                full_name = f'{repo_data.owner}/{repo_data.repo}'
-                logger.info(f'Added repository {repo_id} {full_name!r}')
+                logger.info(
+                    f'Added repository {repo_id} '
+                    f'https://github.com/{repo_data.owner}/{repo_data.repo}'
+                    )
 
         logger.info('Step 3: complete')
         logger.info('Database updated successfully')
