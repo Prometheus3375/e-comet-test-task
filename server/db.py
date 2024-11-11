@@ -40,7 +40,9 @@ class PostgreSQLManager:
                 f"postgresql://{parsed['user']}:REDACTED@"
                 f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
                 )
-            cls.__connection = await AsyncConnection.connect(uri)
+            # Specify autocommit to avoid starting a transaction with the first select
+            # https://www.psycopg.org/psycopg3/docs/basic/transactions.html#autocommit-transactions
+            cls.__connection = await AsyncConnection.connect(uri, autocommit=True)
             await cls.__connection.set_read_only(True)
 
         return cls.__connection
