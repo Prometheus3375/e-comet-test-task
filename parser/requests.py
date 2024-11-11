@@ -171,7 +171,10 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
             commits_total = int(number)
 
     except HTTPError as e:
-        logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
+        # Code 409 means that the repository is empty.
+        if e.code != 409:
+            logger.error(f'{e.__class__.__name__} {e.code} ({e.reason}) for {e.url!r}')
+
         return
 
     # Request 100 (max) commits per page
