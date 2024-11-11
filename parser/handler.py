@@ -91,9 +91,9 @@ def handler(_, __, /) -> dict[str, Any]:
         code = 200
         body = 'Success'
     except Exception:
+        code = 500
         body = 'An error occurred during database update'
         logger.exception(body)
-        code = 500
 
     return {
         'statusCode':      code,
@@ -121,7 +121,6 @@ if __name__ == '__main__':
 
             parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             os.chdir(parent_dir)
-            # zf.write(os.path.basename(__file__))
             for parent_path, dirnames, filenames in os.walk('common'):
                 for filename in filenames:
                     if filename.endswith('.py'):
