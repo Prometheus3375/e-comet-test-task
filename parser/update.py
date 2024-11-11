@@ -142,7 +142,7 @@ def update_database(
                         from activity
                         group by repo_id
                     ) as dates
-                    on repositories.id = dates.repo_id;
+                    on repositories.id = dates.repo_id
                     """
                     )
 
@@ -227,7 +227,7 @@ def update_database(
                         -- While it is guaranteed that no conflicts appear by set updated_repos,
                         -- still do nothing on conflict.
                         on conflict do nothing
-                        returning id;
+                        returning id
                         """,
                         repo_data.model_dump(),
                         )
