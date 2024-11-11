@@ -1,9 +1,11 @@
 import json
 import os
-from logging import Formatter, LogRecord
+from logging import Formatter, LogRecord, getLogger
 from typing import Any, overload
 
 from parser.defaults import *
+
+logger = getLogger(__name__)
 
 
 @overload
@@ -77,21 +79,29 @@ def handler(_, __, /) -> dict[str, Any]:
     new_repo_limit = os.environ.get('NEW_REPO_LIMIT', DEFAULT_NEW_REPO_LIMIT)
     after_github_id = os.environ.get('NEW_REPO_SINCE', DEFAULT_AFTER_GITHUB_ID)
 
-    update_database(
-        database_uri,
-        skip_rank_update=bool(skip_rank_update),
-        skip_repo_update=bool(skip_repo_update),
-        new_repo_limit=int_or_none(new_repo_limit),
-        after_github_id=int_or_none(after_github_id),
-        )
+    try:
+        update_database(
+            database_uri,
+            skip_rank_update=bool(skip_rank_update),
+            skip_repo_update=bool(skip_repo_update),
+            new_repo_limit=int_or_none(new_repo_limit),
+            after_github_id=int_or_none(after_github_id),
+            )
+
+        code = 200
+        body = 'Success'
+    except Exception:
+        body = 'An error occurred during database update'
+        logger.exception(body)
+        code = 500
 
     return {
-        'statusCode':      200,
+        'statusCode':      code,
         'headers':         {
             'Content-Type': 'text/plain'
             },
         'isBase64Encoded': False,
-        'body':            'Success',
+        'body':            body,
         }
 
 
