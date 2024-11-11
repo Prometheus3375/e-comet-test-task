@@ -119,10 +119,9 @@ def update_database(
             logger.info('Step 1 skipped')
         else:
             logger.info('Step 1: update table \'previous_places\'')
-            with conn.cursor() as cursor:
+            with conn.transaction(), conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    begin;
                     merge into previous_places
                     using (
                         select id, rank() over (order by stars desc) as p
@@ -134,8 +133,7 @@ def update_database(
                         update set place = p
                     when not matched then  -- when not matched by target
                         insert (repo_id, place)
-                        values (current_places.id, current_places.p);
-                    commit;
+                        values (current_places.id, current_places.p)
                     """
                     )
 
