@@ -61,7 +61,7 @@ class YCFormatter(Formatter):
         return json.dumps(msg)
 
 
-def handler(event, context) -> dict[str, Any]:
+def handler(_, __, /) -> dict[str, Any]:
     """
     Handler for Yandex Cloud function.
     """
