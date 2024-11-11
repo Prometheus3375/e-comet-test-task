@@ -1,5 +1,4 @@
 import json
-import os
 from collections.abc import Iterator
 from datetime import date, datetime
 from http.client import HTTPResponse
@@ -14,27 +13,17 @@ from pydantic import ValidationError
 from common.models import MAX_AUTHOR_NAME_LENGTH, RepoActivity, RepoData
 
 logger = getLogger(__name__)
-_headers = {
+headers = {
     'Accept':               'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
     }
-
-_github_token = os.environ.get('GITHUB_TOKEN')
-if _github_token:
-    _headers['Authorization'] = f'Bearer {_github_token}'
-    from common.logging import init_logging
-
-    init_logging()
-    logger.info(f'GitHub token is successfully added to headers')
-
-del _github_token
 
 
 def make_request(url: str, /) -> Request:
     """
     Creates a request with default headers for GitHub API.
     """
-    return Request(url, headers=_headers)
+    return Request(url, headers=headers)
 
 
 def request_data(url: str, /) -> Any:

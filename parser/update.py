@@ -57,6 +57,7 @@ def update_activity(
 
 def update_database(
         database_uri: str,
+        github_token: str | None,
         /,
         *,
         skip_rank_update: bool,
@@ -68,6 +69,7 @@ def update_database(
     Updates the database with the new information about repositories and their activity.
 
     :param database_uri: URI of the database.
+    :param github_token: A GitHub authentication token for increasing API rate limits.
     :param skip_rank_update: If ``True``, skips the step of updating table for previous places.
     :param skip_repo_update: If ``True``, skips the step of updating already present repositories.
     :param new_repo_limit: The maximum number of new repositories to fetch from GitHub API.
@@ -75,11 +77,23 @@ def update_database(
     :param after_github_id: Any new repository will have GitHub ID higher than this value.
     """
     # region Verify parameters
+    if not isinstance(database_uri, str):
+        raise TypeError(f'database_uri must be a string, got {database_uri!r}')
+
+    if not (github_token is None or isinstance(github_token, str)):
+        raise TypeError(f'github_token must be a string or None, got {github_token!r}')
+
+    if github_token is not None:
+        from parser import requests
+
+        requests.headers['Authorization'] = f'Bearer {github_token}'
+        logger.info(f'GitHub token is successfully added to headers of requests')
+
     if new_repo_limit is None:
         new_repo_limit = inf
 
     if not (new_repo_limit is None or isinstance(new_repo_limit, int)):
-        raise TypeError(f'new_repo_limit must be an integer of None, got {new_repo_limit!r}')
+        raise TypeError(f'new_repo_limit must be an integer or None, got {new_repo_limit!r}')
 
     if new_repo_limit is None:
         new_repo_limit = inf
