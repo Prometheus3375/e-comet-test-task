@@ -175,11 +175,12 @@ then its URI provided above is not accessible from other containers.
     - Run `docker network connect local-net <web server container name>`.
     - Now the server is able to connect to PostgreSQL on the next API call.
     - The container should be re-added to the network if it is recreated.
-      This can be done manually or by adding next code to the end of `compose.yaml`.
+      This can be done manually or by editing `compose.yaml` as shown below.
       ```yaml
       services:
         server:
           # Present server config goes here
+          # ...
           networks:
             - local-net
 
