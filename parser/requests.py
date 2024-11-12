@@ -8,9 +8,9 @@ from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
-from common.models import MAX_AUTHOR_NAME_LENGTH, RepoActivity, RepoData
+from common.models import CommitAuthorNameType, RepoActivity, RepoData
 
 logger = getLogger(__name__)
 headers = {
@@ -131,6 +131,21 @@ def parse_commit(commit: dict[str, Any]) -> tuple[date, str | None] | None:
     return None
 
 
+_author_name_adapter = TypeAdapter(CommitAuthorNameType)
+
+
+def validate_author_name(name: str, /) -> bool:
+    """
+    Returns ``True`` if the given name passes validation
+    for ``CommitAuthorNameType`` and ``False`` otherwise.
+    """
+    try:
+        _author_name_adapter.validate_python(name)
+        return True
+    except ValidationError:
+        return False
+
+
 def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[RepoActivity]:
     """
     Requests activity since the given date for the specified repository from GitHub API
@@ -205,7 +220,7 @@ def request_repo_activity(owner: str, repo: str, /, since: date) -> Iterator[Rep
                     authors = set()
 
             commit_count += 1
-            if author_name and len(author_name) <= MAX_AUTHOR_NAME_LENGTH:
+            if validate_author_name(author_name):
                 authors.add(author_name)
 
     # Yield activity for the remaining date

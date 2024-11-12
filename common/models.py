@@ -1,12 +1,13 @@
 from datetime import date
-from typing import TypeAlias
+from typing import Annotated
 
-from pydantic import BaseModel, NonNegativeInt, PositiveInt, constr
+from pydantic import BaseModel, NonNegativeInt, PositiveInt, StringConstraints
 
-RepoNameType: TypeAlias = constr(min_length=1, max_length=100)
-UserNameType: TypeAlias = constr(min_length=1, max_length=39)
-RepoFullNameType: TypeAlias = constr(min_length=1, max_length=140)
-MAX_AUTHOR_NAME_LENGTH = 100
+NonEmptyStringUpTo100 = Annotated[str, StringConstraints(min_length=1, max_length=100)]
+RepoNameType = NonEmptyStringUpTo100
+UserNameType = Annotated[str, StringConstraints(min_length=1, max_length=39)]
+RepoFullNameType = Annotated[str, StringConstraints(min_length=1, max_length=140)]
+CommitAuthorNameType = NonEmptyStringUpTo100
 
 
 class RepoData(BaseModel, frozen=True):
@@ -19,7 +20,7 @@ class RepoData(BaseModel, frozen=True):
     watchers: NonNegativeInt
     forks: NonNegativeInt
     open_issues: NonNegativeInt
-    language: constr(min_length=1, max_length=100) | None
+    language: NonEmptyStringUpTo100 | None
 
 
 class RepoActivity(BaseModel, frozen=True):
@@ -30,14 +31,14 @@ class RepoActivity(BaseModel, frozen=True):
     commits: PositiveInt
     # Authors are names specified in commits, not GitHub usernames
     # Can be empty if all commits at the date have no names or the name exceeds length limit
-    authors: frozenset[constr(min_length=1, max_length=MAX_AUTHOR_NAME_LENGTH)]
+    authors: frozenset[CommitAuthorNameType]
 
 
 __all__ = (
     'RepoNameType',
     'UserNameType',
     'RepoFullNameType',
+    'CommitAuthorNameType',
     'RepoData',
     'RepoActivity',
-    'MAX_AUTHOR_NAME_LENGTH',
     )
