@@ -1,9 +1,12 @@
+import os
+from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from datetime import date
 from logging import getLogger
 from operator import attrgetter
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 
@@ -13,13 +16,28 @@ from server.models import *
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI, /):
+async def lifespan(_: FastAPI, /) -> Iterator[None]:
     # Actions on startup
+    verified = await PostgreSQLManager.verify_connectivity(os.getenv('DATABASE_URI'))
+    if not verified:
+        raise ValueError('environmental variable DATABASE_URI is not properly set')
+
     yield
     # Actions on shutdown
-    await PostgreSQLManager.close()
 
 
+async def make_db_manager() -> Iterator[PostgreSQLManager]:
+    """
+    Dependency function for creating an instance of :class:`PostgreSQLManager`.
+    """
+    manager = await PostgreSQLManager.connect(os.getenv('DATABASE_URI'))
+    try:
+        yield manager
+    finally:
+        await manager.close()
+
+
+DBManagerType = Annotated[PostgreSQLManager, Depends(make_db_manager)]
 app = FastAPI(
     title='Entity Resolution API',
     version='1.0.0',
@@ -51,6 +69,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.get('/api/repos/top100')
 async def api_get_top_100(
         *,
+        db_manager: DBManagerType,
         sort_by: SortByOptions = SortByOptions.stars,
         descending: bool = False,
         ) -> list[RepoDataWithRank]:
@@ -60,7 +79,7 @@ async def api_get_top_100(
 
     The place is determined by the number of stargazers.
     """
-    result = await PostgreSQLManager.fetch_top_n(100)
+    result = await db_manager.fetch_top_n(100)
     result.sort(key=attrgetter(sort_by.name), reverse=descending)
     return result
 
@@ -68,6 +87,7 @@ async def api_get_top_100(
 @app.get('/api/repos/{owner}/{repo}/activity')
 async def api_get_activity(
         *,
+        db_manager: DBManagerType,
         owner: str,
         repo: str,
         since: date | None = None,
@@ -78,7 +98,7 @@ async def api_get_activity(
     Bounds are inclusive; parameters ``since`` and ``until`` must be the same
     for fetching the activity for a single day.
     """
-    return await PostgreSQLManager.fetch_activity(
+    return await db_manager.fetch_activity(
         owner=owner,
         repo=repo,
         since=since,
