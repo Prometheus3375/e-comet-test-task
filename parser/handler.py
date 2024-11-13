@@ -71,12 +71,12 @@ def handler(_, __, /) -> dict[str, Any]:
     """
     init_logging(YCFormatter(), use_new_handler=False)
 
-    database_uri = os.environ.get('DATABASE_URI')
-    github_token = os.environ.get('GITHUB_TOKEN')
-    skip_rank_update = os.environ.get('SKIP_RANK_UPDATE')
-    skip_repo_update = os.environ.get('SKIP_REPO_UPDATE')
-    new_repo_limit = os.environ.get('NEW_REPO_LIMIT', DEFAULT_NEW_REPO_LIMIT)
-    after_github_id = os.environ.get('NEW_REPO_SINCE', DEFAULT_AFTER_GITHUB_ID)
+    database_uri = os.getenv('DATABASE_URI')
+    github_token = os.getenv('GITHUB_TOKEN')
+    skip_rank_update = os.getenv('SKIP_RANK_UPDATE')
+    skip_repo_update = os.getenv('SKIP_REPO_UPDATE')
+    new_repo_limit = os.getenv('NEW_REPO_LIMIT', DEFAULT_NEW_REPO_LIMIT)
+    after_github_id = os.getenv('NEW_REPO_SINCE', DEFAULT_AFTER_GITHUB_ID)
 
     try:
         update_database(
