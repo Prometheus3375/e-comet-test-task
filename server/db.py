@@ -1,6 +1,7 @@
 from datetime import date
 from logging import getLogger
-from typing import LiteralString, final
+from types import TracebackType
+from typing import LiteralString, Self, TypeVar, final
 
 from psycopg import AsyncConnection
 from psycopg.conninfo import conninfo_to_dict
@@ -9,6 +10,7 @@ from psycopg.rows import class_row
 from common.models import RepoActivity
 from .models import *
 
+ExcT = TypeVar('ExcT', bound=BaseException)
 logger = getLogger(__name__)
 
 
@@ -17,53 +19,84 @@ class PostgreSQLManager:
     """
     A class for managing connections to PostgreSQL database.
     """
-    def __init__(self, /) -> None:
-        raise TypeError(f'cannot instantiate {self.__class__.__name__}')
-
-    __connection: AsyncConnection | None = None
+    def __init__(self, connection: AsyncConnection, /) -> None:
+        self._conn = connection
 
     @classmethod
-    async def __connect(cls, /) -> AsyncConnection:
+    async def __make_connection(cls, uri: str, /) -> AsyncConnection:
         """
-        Establishes a connection to the database or returns the existing one.
+        Establishes a connection to the database with the given URI.
         """
-        if cls.__connection is None:
-            import os
+        # Specify autocommit to avoid starting a transaction with the first select
+        # https://www.psycopg.org/psycopg3/docs/basic/transactions.html#autocommit-transactions
+        conn = await AsyncConnection.connect(uri, autocommit=True)
+        await conn.set_read_only(True)
+        return conn
 
-            uri = os.environ.get('DATABASE_URI')
-            if not uri:
-                raise ValueError('environmental variable DATABASE_URI must be set')
+    @classmethod
+    async def verify_connectivity(cls, uri: str | None, /) -> bool:
+        """
+        Verifies whether a connection to the database with the given URI can be established
+        and logs errors if it is not possible.
+        """
+        if not uri:
+            logger.error('URI of PostgreSQL cannot be None or empty')
+            return False
 
+        try:
             parsed = conninfo_to_dict(uri)
-            logger.info(
-                f"Connecting to the database "
-                f"postgresql://{parsed['user']}:REDACTED@"
-                f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
-                )
-            # Specify autocommit to avoid starting a transaction with the first select
-            # https://www.psycopg.org/psycopg3/docs/basic/transactions.html#autocommit-transactions
-            cls.__connection = await AsyncConnection.connect(uri, autocommit=True)
-            await cls.__connection.set_read_only(True)
+        except Exception:
+            logger.exception('Failed to parse the provided PostgreSQL URI')
+            return False
 
-        return cls.__connection
+        logger.info(
+            f"Verifying connectivity to the database "
+            f"postgresql://{parsed['user']}:REDACTED@"
+            f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
+            )
+
+        try:
+            connection = await cls.__make_connection(uri)
+            logger.info('Connection to the database can be established successfully')
+            await connection.close()
+        except Exception:
+            logger.exception('Connection to the database cannot be established')
+            return False
+
+        return True
 
     @classmethod
-    async def close(cls, /) -> None:
+    async def connect(cls, uri: str, /) -> Self:
         """
-        Closes the connection to the database.
+        Creates a manager for the database with the given URI.
         """
-        if cls.__connection is not None:
-            await cls.__connection.close()
-            cls.__connection = None
+        return cls(await cls.__make_connection(uri))
 
-    @classmethod
-    async def fetch_top_n(cls, n: int, /) -> list[RepoDataWithRank]:
+    async def close(self, /) -> None:
+        """
+        Closes this database manager.
+        """
+        await self._conn.close()
+
+    async def __aenter__(self, /) -> Self:
+        return self
+
+    async def __aexit__(
+            self,
+            exc_type: type[ExcT] | None,
+            exc_val: ExcT | None,
+            exc_tb: TracebackType | None,
+            /,
+            ) -> bool:
+        await self.close()
+        return False
+
+    async def fetch_top_n(self, n: int, /) -> list[RepoDataWithRank]:
         """
         Fetches the top ``n`` repositories.
         The place is determined by the number of stargazers.
         """
-        conn = await cls.__connect()
-        async with conn.cursor(row_factory=class_row(RepoDataWithRank)) as cursor:
+        async with self._conn.cursor(row_factory=class_row(RepoDataWithRank)) as cursor:
             result = await cursor.execute(
                 """
                 with current_places as (
@@ -113,9 +146,8 @@ class PostgreSQLManager:
         where %(since)s <= date and date <= %(until)s
         """
 
-    @classmethod
     async def fetch_activity(
-            cls,
+            self,
             /,
             owner: str,
             repo: str,
@@ -127,20 +159,19 @@ class PostgreSQLManager:
         """
         query: LiteralString
         if since is None and until is None:
-            query = cls._query_fetch_activity_all
+            query = self._query_fetch_activity_all
             params = dict(repo=repo, owner=owner)
         elif since is None:
-            query = cls._query_fetch_activity_until
+            query = self._query_fetch_activity_until
             params = dict(repo=repo, owner=owner, until=until)
         elif until is None:
-            query = cls._query_fetch_activity_since
+            query = self._query_fetch_activity_since
             params = dict(repo=repo, owner=owner, since=since)
         else:
-            query = cls._query_fetch_activity_since_until
+            query = self._query_fetch_activity_since_until
             params = dict(repo=repo, owner=owner, since=since, until=until)
 
-        conn = await cls.__connect()
-        async with conn.cursor(row_factory=class_row(RepoActivity)) as cursor:
+        async with self._conn.cursor(row_factory=class_row(RepoActivity)) as cursor:
             result = await cursor.execute(query, params)
             return await result.fetchall()
 
