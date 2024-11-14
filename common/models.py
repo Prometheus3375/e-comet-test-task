@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, NonNegativeInt, PositiveInt, StringConstraints
 
+NonEmptyString = Annotated[str, StringConstraints(min_length=1)]
 NonEmptyStringUpTo100 = Annotated[str, StringConstraints(min_length=1, max_length=100)]
 RepoNameType = NonEmptyStringUpTo100
 UserNameType = Annotated[str, StringConstraints(min_length=1, max_length=39)]
@@ -35,6 +36,7 @@ class RepoActivity(BaseModel, frozen=True):
 
 
 __all__ = (
+    'NonEmptyString',
     'RepoNameType',
     'UserNameType',
     'RepoFullNameType',
