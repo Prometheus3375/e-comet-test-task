@@ -1,5 +1,4 @@
 import os
-from asyncio import Lock
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from datetime import date
@@ -9,62 +8,66 @@ from typing import Annotated
 from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
+from psycopg_pool import AsyncConnectionPool
 
 from common.models import RepoActivity
-from server.db import PostgreSQLManager
+from server.db import *
 from server.models import *
+
+
+def get_int_env(env_name: str, default: int | None, /) -> int | None:
+    """
+    Converts the value of an environmental variable into an integer
+    if it is set (i.e., it is not ``None`` and not an empty string),
+    or returns the default value otherwise.
+    """
+    value = os.getenv(env_name)
+    return int(value) if value else default
+
+
+DATABASE_URI = os.getenv('DATABASE_URI')
+MIN_POOL_SIZE = get_int_env('CONNECTION_POOL_MIN_SIZE', 1)
+MAX_POOL_SIZE = get_int_env('CONNECTION_POOL_MAX_SIZE', None)
+
+connection_pool = AsyncConnectionPool(
+    DATABASE_URI,
+    kwargs=None,
+    min_size=MIN_POOL_SIZE,
+    max_size=MAX_POOL_SIZE,
+    open=False,
+    configure=configure_connection,
+    check=AsyncConnectionPool.check_connection,
+    name='Global PostgreSQL connection pool',
+    )
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI, /) -> Iterator[None]:
     # Actions on startup
-    verified = await PostgreSQLManager.verify_connectivity(os.getenv('DATABASE_URI'))
-    if not verified:
+    if not (await verify_connectivity(DATABASE_URI)):
         raise ValueError('environmental variable DATABASE_URI is not properly set')
 
+    await connection_pool.open()
+    await connection_pool.wait()
+    logger.info(
+        f'Connection pool is ready. '
+        f'Min size is {connection_pool.min_size}, '
+        f'max size is {connection_pool.max_size}'
+        )
     yield
     # Actions on shutdown
+    await connection_pool.close()
 
 
-class DBManagerPool:
+async def make_db_requester() -> Iterator[PostgreSQLRequester]:
     """
-    A class for storing available database managers.
+    Dependency function for creating an instance of :class:`PostgreSQLRequester`.
     """
-    __lock = Lock()
-    __pool: set[PostgreSQLManager] = set()
-
-    @classmethod
-    async def acquire(cls, /) -> PostgreSQLManager:
-        """
-        Acquires a database manager from the pool and creates a new one if none present.
-        """
-        async with cls.__lock:
-            if cls.__pool:
-                return cls.__pool.pop()
-            else:
-                return await PostgreSQLManager.connect(os.getenv('DATABASE_URI'))
-
-    @classmethod
-    async def release(cls, manager: PostgreSQLManager, /) -> None:
-        """
-        Returns the database manager to the pool.
-        """
-        async with cls.__lock:
-            cls.__pool.add(manager)
+    async with connection_pool.connection() as conn:
+        yield PostgreSQLRequester(conn)
 
 
-async def make_db_manager() -> Iterator[PostgreSQLManager]:
-    """
-    Dependency function for creating an instance of :class:`PostgreSQLManager`.
-    """
-    manager = await DBManagerPool.acquire()
-    try:
-        yield manager
-    finally:
-        await DBManagerPool.release(manager)
-
-
-DBManagerType = Annotated[PostgreSQLManager, Depends(make_db_manager)]
+DBRequesterType = Annotated[PostgreSQLRequester, Depends(make_db_requester)]
 app = FastAPI(
     title='Entity Resolution API',
     version='1.0.0',
@@ -96,7 +99,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.get('/api/repos/top100')
 async def api_get_top_100(
         *,
-        db_manager: DBManagerType,
+        db_requester: DBRequesterType,
         sort_by: SortByOptions = SortByOptions.stars,
         descending: bool = False,
         ) -> list[RepoDataWithRank]:
@@ -106,7 +109,7 @@ async def api_get_top_100(
 
     The place is determined by the number of stargazers.
     """
-    result = await db_manager.fetch_top_n(100)
+    result = await db_requester.fetch_top_n(100)
     result.sort(key=sort_by.sort_key, reverse=descending)
     return result
 
@@ -114,7 +117,7 @@ async def api_get_top_100(
 @app.get('/api/repos/{owner}/{repo}/activity')
 async def api_get_activity(
         *,
-        db_manager: DBManagerType,
+        db_requester: DBRequesterType,
         owner: str,
         repo: str,
         since: date | None = None,
@@ -125,7 +128,7 @@ async def api_get_activity(
     Bounds are inclusive; parameters ``since`` and ``until`` must be the same
     for fetching the activity for a single day.
     """
-    return await db_manager.fetch_activity(
+    return await db_requester.fetch_activity(
         owner=owner,
         repo=repo,
         since=since,
