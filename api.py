@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from datetime import date
@@ -14,38 +13,29 @@ from common.models import RepoActivity
 from server.db import *
 from server.models import *
 
-
-def get_int_env(env_name: str, default: int | None, /) -> int | None:
-    """
-    Converts the value of an environmental variable into an integer
-    if it is set (i.e., it is not ``None`` and not an empty string),
-    or returns the default value otherwise.
-    """
-    value = os.getenv(env_name)
-    return int(value) if value else default
-
-
-DATABASE_URI = os.getenv('DATABASE_URI')
-MIN_POOL_SIZE = get_int_env('CONNECTION_POOL_MIN_SIZE', 1)
-MAX_POOL_SIZE = get_int_env('CONNECTION_POOL_MAX_SIZE', None)
-
-connection_pool = AsyncConnectionPool(
-    DATABASE_URI,
-    kwargs=None,
-    min_size=MIN_POOL_SIZE,
-    max_size=MAX_POOL_SIZE,
-    open=False,
-    configure=configure_connection,
-    check=AsyncConnectionPool.check_connection,
-    name='Global PostgreSQL connection pool',
-    )
+settings: Settings
+connection_pool: AsyncConnectionPool
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI, /) -> Iterator[None]:
+    global settings, connection_pool
     # Actions on startup
-    if not (await verify_connectivity(DATABASE_URI)):
+    settings = Settings()
+
+    if not (await verify_connectivity(settings.database_uri)):
         raise ValueError('environmental variable DATABASE_URI is not properly set')
+
+    connection_pool = AsyncConnectionPool(
+        settings.database_uri,
+        kwargs=None,
+        min_size=settings.connection_pool_min_size,
+        max_size=settings.connection_pool_max_size,
+        open=False,
+        configure=configure_connection,
+        check=AsyncConnectionPool.check_connection,
+        name='Global PostgreSQL connection pool',
+        )
 
     await connection_pool.open()
     await connection_pool.wait()
