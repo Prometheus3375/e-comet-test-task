@@ -1,7 +1,6 @@
 from datetime import date
 from logging import getLogger
-from types import TracebackType
-from typing import LiteralString, Self, TypeVar, final
+from typing import LiteralString, final
 
 from psycopg import AsyncConnection
 from psycopg.conninfo import conninfo_to_dict
@@ -10,86 +9,56 @@ from psycopg.rows import class_row
 from common.models import RepoActivity
 from .models import *
 
-ExcT = TypeVar('ExcT', bound=BaseException)
 logger = getLogger(__name__)
 
 
-@final
-class PostgreSQLManager:
+async def configure_connection(conn: AsyncConnection, /) -> None:
     """
-    A class for managing connections to PostgreSQL database.
+    A function for configuring a database connection.
+    """
+    await conn.set_autocommit(True)
+    await conn.set_read_only(True)
+
+
+async def verify_connectivity(uri: str | None, /) -> bool:
+    """
+    Verifies whether a connection to the database with the given URI can be established
+    and logs errors if it is not possible.
+    """
+    if not uri:
+        logger.error('URI of PostgreSQL cannot be None or empty')
+        return False
+
+    try:
+        parsed = conninfo_to_dict(uri)
+    except Exception:
+        logger.exception('Failed to parse the provided PostgreSQL URI')
+        return False
+
+    logger.info(
+        f"Verifying connectivity to the database "
+        f"postgresql://{parsed['user']}:REDACTED@"
+        f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
+        )
+
+    try:
+        async with await AsyncConnection.connect(uri) as conn:
+            await configure_connection(conn)
+            logger.info('Connection to the database can be established successfully')
+    except Exception:
+        logger.exception('Connection to the database cannot be established')
+        return False
+
+    return True
+
+
+@final
+class PostgreSQLRequester:
+    """
+    A class for querying PostgreSQL database.
     """
     def __init__(self, connection: AsyncConnection, /) -> None:
         self._conn = connection
-
-    @classmethod
-    async def __make_connection(cls, uri: str, /) -> AsyncConnection:
-        """
-        Establishes a connection to the database with the given URI.
-        """
-        # Specify autocommit to avoid starting a transaction with the first select
-        # https://www.psycopg.org/psycopg3/docs/basic/transactions.html#autocommit-transactions
-        conn = await AsyncConnection.connect(uri, autocommit=True)
-        await conn.set_read_only(True)
-        return conn
-
-    @classmethod
-    async def verify_connectivity(cls, uri: str | None, /) -> bool:
-        """
-        Verifies whether a connection to the database with the given URI can be established
-        and logs errors if it is not possible.
-        """
-        if not uri:
-            logger.error('URI of PostgreSQL cannot be None or empty')
-            return False
-
-        try:
-            parsed = conninfo_to_dict(uri)
-        except Exception:
-            logger.exception('Failed to parse the provided PostgreSQL URI')
-            return False
-
-        logger.info(
-            f"Verifying connectivity to the database "
-            f"postgresql://{parsed['user']}:REDACTED@"
-            f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
-            )
-
-        try:
-            connection = await cls.__make_connection(uri)
-            logger.info('Connection to the database can be established successfully')
-            await connection.close()
-        except Exception:
-            logger.exception('Connection to the database cannot be established')
-            return False
-
-        return True
-
-    @classmethod
-    async def connect(cls, uri: str, /) -> Self:
-        """
-        Creates a manager for the database with the given URI.
-        """
-        return cls(await cls.__make_connection(uri))
-
-    async def close(self, /) -> None:
-        """
-        Closes this database manager.
-        """
-        await self._conn.close()
-
-    async def __aenter__(self, /) -> Self:
-        return self
-
-    async def __aexit__(
-            self,
-            exc_type: type[ExcT] | None,
-            exc_val: ExcT | None,
-            exc_tb: TracebackType | None,
-            /,
-            ) -> bool:
-        await self.close()
-        return False
 
     async def fetch_top_n(self, n: int, /) -> list[RepoDataWithRank]:
         """
@@ -176,4 +145,4 @@ class PostgreSQLManager:
             return await result.fetchall()
 
 
-__all__ = 'PostgreSQLManager',
+__all__ = 'configure_connection', 'verify_connectivity', 'PostgreSQLRequester'
