@@ -1,4 +1,5 @@
 import os
+from asyncio import Lock
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from datetime import date
@@ -26,15 +27,42 @@ async def lifespan(_: FastAPI, /) -> Iterator[None]:
     # Actions on shutdown
 
 
+class DBManagerPool:
+    """
+    A class for storing available database managers.
+    """
+    __lock = Lock()
+    __pool: set[PostgreSQLManager] = set()
+
+    @classmethod
+    async def acquire(cls, /) -> PostgreSQLManager:
+        """
+        Acquires a database manager from the pool and creates a new one if none present.
+        """
+        async with cls.__lock:
+            if cls.__pool:
+                return cls.__pool.pop()
+            else:
+                return await PostgreSQLManager.connect(os.getenv('DATABASE_URI'))
+
+    @classmethod
+    async def release(cls, manager: PostgreSQLManager, /) -> None:
+        """
+        Returns the database manager to the pool.
+        """
+        async with cls.__lock:
+            cls.__pool.add(manager)
+
+
 async def make_db_manager() -> Iterator[PostgreSQLManager]:
     """
     Dependency function for creating an instance of :class:`PostgreSQLManager`.
     """
-    manager = await PostgreSQLManager.connect(os.getenv('DATABASE_URI'))
+    manager = await DBManagerPool.acquire()
     try:
         yield manager
     finally:
-        await manager.close()
+        await DBManagerPool.release(manager)
 
 
 DBManagerType = Annotated[PostgreSQLManager, Depends(make_db_manager)]
