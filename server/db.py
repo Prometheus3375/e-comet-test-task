@@ -20,15 +20,11 @@ async def configure_connection(conn: AsyncConnection, /) -> None:
     await conn.set_read_only(True)
 
 
-async def verify_connectivity(uri: str | None, /) -> bool:
+async def verify_connectivity(uri: str, /) -> bool:
     """
     Verifies whether a connection to the database with the given URI can be established
     and logs errors if it is not possible.
     """
-    if not uri:
-        logger.error('URI of PostgreSQL cannot be None or empty')
-        return False
-
     try:
         parsed = conninfo_to_dict(uri)
     except Exception:
