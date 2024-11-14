@@ -1,29 +1,16 @@
 import json
-import os
 from logging import Formatter, LogRecord, getLogger
-from typing import Any, overload
+from typing import Any
 
+from pydantic import NonNegativeInt
+from pydantic_settings import BaseSettings
+
+from common.models import NonEmptyString
 from parser.defaults import *
 from parser.logging import init_logging
 from parser.update import update_database
 
 logger = getLogger(__name__)
-
-
-@overload
-def int_or_none(value: Any, /) -> int: ...
-
-
-@overload
-def int_or_none(value: None, /) -> None: ...
-
-
-def int_or_none(value: Any | None, /) -> int | None:
-    """
-    Coverts a value to an integer.
-    If the passed value is ``None``, returns ``None``.
-    """
-    return None if value is None else int(value)
 
 
 def truncate(value: str, limit: int, /) -> str:
@@ -65,27 +52,33 @@ class YCFormatter(Formatter):
         return json.dumps(msg)
 
 
+class Settings(BaseSettings, env_ignore_empty=True):
+    """
+    Model for holding handler settings.
+    """
+    database_uri: NonEmptyString
+    github_token: NonEmptyString | None = None
+    skip_rank_update: bool = False
+    skip_repo_update: bool = False
+    new_repo_limit: NonNegativeInt | None = DEFAULT_NEW_REPO_LIMIT
+    new_repo_since: NonNegativeInt = DEFAULT_AFTER_GITHUB_ID
+
+
 def handler(_, __, /) -> dict[str, Any]:
     """
     Handler for Yandex Cloud function.
     """
     init_logging(YCFormatter(), use_new_handler=False)
 
-    database_uri = os.getenv('DATABASE_URI')
-    github_token = os.getenv('GITHUB_TOKEN')
-    skip_rank_update = os.getenv('SKIP_RANK_UPDATE')
-    skip_repo_update = os.getenv('SKIP_REPO_UPDATE')
-    new_repo_limit = os.getenv('NEW_REPO_LIMIT', DEFAULT_NEW_REPO_LIMIT)
-    after_github_id = os.getenv('NEW_REPO_SINCE', DEFAULT_AFTER_GITHUB_ID)
-
     try:
+        settings = Settings()
         update_database(
-            database_uri,
-            github_token,
-            skip_rank_update=bool(skip_rank_update),
-            skip_repo_update=bool(skip_repo_update),
-            new_repo_limit=int_or_none(new_repo_limit),
-            after_github_id=int_or_none(after_github_id),
+            settings.database_uri,
+            settings.github_token,
+            skip_rank_update=settings.skip_rank_update,
+            skip_repo_update=settings.skip_repo_update,
+            new_repo_limit=settings.new_repo_limit,
+            after_github_id=settings.new_repo_since,
             )
 
         code = 200
@@ -115,6 +108,7 @@ if __name__ == '__main__':
                 reqs = [
                     b'psycopg[binary]~=3.2.3',
                     b'pydantic~=2.9.2',
+                    b'pydantic-settings~=2.6.1',
                     ]
                 f.write(b'\n'.join(reqs))
                 f.write(b'\n')
