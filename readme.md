@@ -24,6 +24,8 @@ A webserver to view some information about public repositories on GitHub.
 7. Create file `.env` from the template below and fill it accordingly.
    ```
    DATABASE_URI=<URI of PostgreSQL database>
+   CONNECTION_POOL_MIN_SIZE=1
+   CONNECTION_POOL_MAX_SIZE=10
    ```
 
 ## Database
@@ -146,6 +148,16 @@ Run `python -m parser --help` to view detailed information, a brief excerpt is b
 - `NEW_REPO_SINCE` - new repositories are fetched after this GitHub ID.
 
 ## Web server
+
+### Environmental variables
+
+Before starting the server, properly configure `.env` file.
+Available environmental variables are below.
+
+- `DATABASE_URI` - URI of PostgreSQL database, must be set.
+- `CONNECTION_POOL_MIN_SIZE` - the minimum size of PostgreSQL connection pool. Defaults to 1.
+- `CONNECTION_POOL_MAX_SIZE` - the maximum size of PostgreSQL connection pool.
+  Defaults to `None` which means the pool size is fixed to its minimum.
 
 ### Running locally
 
