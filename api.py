@@ -4,7 +4,6 @@ from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from datetime import date
 from logging import getLogger
-from operator import attrgetter
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Request
@@ -108,7 +107,7 @@ async def api_get_top_100(
     The place is determined by the number of stargazers.
     """
     result = await db_manager.fetch_top_n(100)
-    result.sort(key=attrgetter(sort_by.name), reverse=descending)
+    result.sort(key=sort_by.sort_key, reverse=descending)
     return result
 
 
