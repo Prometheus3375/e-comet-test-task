@@ -27,15 +27,14 @@ async def verify_connectivity(uri: str, /) -> bool:
     """
     try:
         parsed = conninfo_to_dict(uri)
+        logger.info(
+            f"Verifying connectivity to the database "
+            f"postgresql://{parsed['user']}:REDACTED@"
+            f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
+            )
     except Exception:
         logger.exception('Failed to parse the provided PostgreSQL URI')
         return False
-
-    logger.info(
-        f"Verifying connectivity to the database "
-        f"postgresql://{parsed['user']}:REDACTED@"
-        f"{parsed['host']}:{parsed['port']}/{parsed['dbname']}"
-        )
 
     try:
         async with await AsyncConnection.connect(uri) as conn:
