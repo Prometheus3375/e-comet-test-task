@@ -134,6 +134,9 @@ Running the function with lesser intervals is not viable:
 - If a repository updates often within a day,
   then its most recent activity entry is constantly rewritten.
 
+If the time required to update the whole database exceeds execution limit,
+you can create more functions and specify bounds of updating for each via environmental variables.
+
 #### Available environmental variables
 
 All the variables below are corresponding to options of the script for local run.
@@ -141,9 +144,10 @@ Run `python -m parser --help` to view detailed information, a brief excerpt is b
 
 - `DATABASE_URI` - URI of PostgreSQL. Must be set.
 - `GITHUB_TOKEN` - GitHub authentication token.
-- `SKIP_RANK_UPDATE` - if set to any non-empty string, no updates are performed for previous ranks.
-- `SKIP_REPO_UPDATE` - if set to any non-empty string,
-  no updates are performed for already present repositories.
+- `SKIP_RANK_UPDATE` - if set to `True`, no updates are performed for previous ranks.
+- `SKIP_REPO_UPDATE` - if set to `True`, no updates are performed for already present repositories.
+- `UPDATE_REPO_SINCE` - the value of repository ID since which the repositories are updated.
+- `UPDATE_REPO_UNTIL` - the value of repository ID until which the repositories are updated.
 - `NEW_REPO_LIMIT` - the maximum number of new repositories added on each call.
 - `NEW_REPO_SINCE` - new repositories are fetched after this GitHub ID.
 
