@@ -60,6 +60,8 @@ class Settings(BaseSettings, env_ignore_empty=True):
     github_token: NonEmptyString | None = None
     skip_rank_update: bool = False
     skip_repo_update: bool = False
+    update_repo_since: NonNegativeInt = DEFAULT_UPDATE_REPO_SINCE
+    update_repo_until: NonNegativeInt | None = DEFAULT_UPDATE_REPO_UNTIL
     new_repo_limit: NonNegativeInt | None = DEFAULT_NEW_REPO_LIMIT
     new_repo_since: NonNegativeInt = DEFAULT_AFTER_GITHUB_ID
 
@@ -77,6 +79,8 @@ def handler(_, __, /) -> dict[str, Any]:
             settings.github_token,
             skip_rank_update=settings.skip_rank_update,
             skip_repo_update=settings.skip_repo_update,
+            update_repo_since=settings.update_repo_since,
+            update_repo_until=settings.update_repo_until,
             new_repo_limit=settings.new_repo_limit,
             after_github_id=settings.new_repo_since,
             )
