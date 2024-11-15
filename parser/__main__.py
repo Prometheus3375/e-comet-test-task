@@ -43,7 +43,7 @@ if __name__ == '__main__':
         '--update-repo-since',
         type=int,
         default=DEFAULT_UPDATE_REPO_SINCE,
-        help='The value of database ID since which the repositories are updated. '
+        help='The value of database ID since which the repositories are updated.\n'
              'This bound is inclusive.\n'
              f'Defaults to {DEFAULT_UPDATE_REPO_SINCE}.',
         )
@@ -51,9 +51,9 @@ if __name__ == '__main__':
         '--update-repo-until',
         type=int,
         default=DEFAULT_UPDATE_REPO_UNTIL,
-        help='The value of database ID until which the repositories are updated. '
-             'This bound is inclusive.\n'
-             f'If not specified, this bound is disabled.',
+        help='The value of database ID until which the repositories are updated.\n'
+             'This bound is inclusive and always at least as big as the lower bound.\n'
+             'If not specified, this bound is disabled.',
         )
     argparser.add_argument(
         '--new-repo-limit',
