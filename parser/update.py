@@ -166,7 +166,10 @@ def update_database(
 
             logger.info('Step 2 skipped')
         else:
-            logger.info('Step 2: update existing repositories')
+            logger.info(
+                f'Step 2: update existing repositories '
+                f'[{update_repo_since}, {update_repo_until}]'
+                )
             with conn.cursor() as existing_repos:
                 existing_repos.execute(
                     """
