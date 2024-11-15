@@ -40,6 +40,22 @@ if __name__ == '__main__':
              'general and activity information of repositories.',
         )
     argparser.add_argument(
+        '--update-repo-since',
+        type=int,
+        default=DEFAULT_UPDATE_REPO_SINCE,
+        help='The value of database ID since which the repositories are updated. '
+             'This bound is inclusive.\n'
+             f'Defaults to {DEFAULT_UPDATE_REPO_SINCE}.',
+        )
+    argparser.add_argument(
+        '--update-repo-until',
+        type=int,
+        default=DEFAULT_UPDATE_REPO_UNTIL,
+        help='The value of database ID until which the repositories are updated. '
+             'This bound is inclusive.\n'
+             f'If not specified, this bound is disabled.',
+        )
+    argparser.add_argument(
         '--new-repo-limit',
         type=int,
         default=DEFAULT_NEW_REPO_LIMIT,
@@ -72,6 +88,8 @@ if __name__ == '__main__':
         params.github_token,
         skip_rank_update=params.skip_rank_update,
         skip_repo_update=params.skip_repo_update,
+        update_repo_since=params.update_repo_since,
+        update_repo_until=params.update_repo_until,
         new_repo_limit=params.new_repo_limit,
         after_github_id=params.new_repo_since,
         )
