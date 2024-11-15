@@ -62,6 +62,8 @@ def update_database(
         *,
         skip_rank_update: bool,
         skip_repo_update: bool,
+        update_repo_since: int,
+        update_repo_until: int | None,
         new_repo_limit: int | None,
         after_github_id: int,
         ) -> None:
@@ -72,6 +74,10 @@ def update_database(
     :param github_token: A GitHub authentication token for increasing API rate limits.
     :param skip_rank_update: If ``True``, skips the step of updating table for previous places.
     :param skip_repo_update: If ``True``, skips the step of updating already present repositories.
+    :param update_repo_since: Only repositories with database ID greater or equal
+      than this number are updated.
+    :param update_repo_until: Only repositories with database ID less or equal
+      than this number are updated. Can be ``None`` to disable this option.
     :param new_repo_limit: The maximum number of new repositories to fetch from GitHub API.
         Can be ``None`` to fetch an unlimited number of repositories.
     :param after_github_id: Any new repository will have GitHub ID higher than this value.
@@ -80,30 +86,38 @@ def update_database(
     if not isinstance(database_uri, str):
         raise TypeError(f'database_uri must be a string, got {database_uri!r}')
 
-    if not (github_token is None or isinstance(github_token, str)):
-        raise TypeError(f'github_token must be a string or None, got {github_token!r}')
-
     if github_token is not None:
+        if not isinstance(github_token, str):
+            raise TypeError(f'github_token must be a string or None, got {github_token!r}')
+
         from parser import requests
 
         requests.headers['Authorization'] = f'Bearer {github_token}'
         logger.info(f'GitHub token is successfully added to headers of requests')
 
-    if new_repo_limit is None:
-        new_repo_limit = inf
+    if not isinstance(update_repo_since, int):
+        raise TypeError(f'update_repo_since must be an integer, got {update_repo_since!r}')
 
-    if not (new_repo_limit is None or isinstance(new_repo_limit, int)):
-        raise TypeError(f'new_repo_limit must be an integer or None, got {new_repo_limit!r}')
+    update_repo_since = max(0, update_repo_since)
 
-    if new_repo_limit is None:
-        new_repo_limit = inf
+    if update_repo_until is None:
+        update_repo_until = inf
+    elif isinstance(update_repo_until, int):
+        update_repo_until = max(update_repo_since, update_repo_until)
     else:
+        raise TypeError(f'update_repo_until must be an integer, got {update_repo_until!r}')
+
+    if new_repo_limit is None:
+        new_repo_limit = inf
+    elif isinstance(new_repo_limit, int):
         new_repo_limit = max(0, new_repo_limit)
+    else:
+        raise TypeError(f'new_repo_limit must be an integer or None, got {new_repo_limit!r}')
 
     if not isinstance(after_github_id, int):
         raise TypeError(f'after_github_id must be an integer, got {after_github_id!r}')
 
-    # This value must be positive
+    # This value must be non-negative
     after_github_id = max(0, after_github_id)
     # endregion
 
@@ -174,6 +188,9 @@ def update_database(
                     # as inserting an existing repo later will cause an error
                     full_name = f'{owner}/{repo}'
                     updated_repos.add(full_name)
+                    # Skip updates for repos out of bounds
+                    if not (update_repo_since <= repo_id <= update_repo_until): continue
+
                     repo_data = request_repo(owner, repo)
                     if not repo_data: continue
 
