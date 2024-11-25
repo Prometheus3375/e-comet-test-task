@@ -59,7 +59,7 @@ async def make_db_requester() -> Iterator[PostgreSQLRequester]:
 
 DBRequesterType = Annotated[PostgreSQLRequester, Depends(make_db_requester)]
 app = FastAPI(
-    title='Entity Resolution API',
+    title='Public Repository API',
     version='1.0.0',
     # PyCharm still thinks / is an argument in a function signature,
     # 5 years has passed since introduction of positional-only specifier,
