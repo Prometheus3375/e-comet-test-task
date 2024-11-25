@@ -165,7 +165,11 @@ Available environmental variables are below.
 
 ### Running locally
 
-Run `python uvicorn api:app --env-file .env --port 2127` to start the server locally.
+Run
+```
+python uvicorn api:app --env-file .env --port 2127 --log-config server/logging-config.json
+```
+to start the server locally.
 
 **Note**: on Windows you must specify option `--reload`
 as it runs the server with the event loop policy compatible with `psycopg`
