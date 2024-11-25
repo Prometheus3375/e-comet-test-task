@@ -52,6 +52,8 @@ class PostgreSQLRequester:
     """
     A class for querying PostgreSQL database.
     """
+    __slots__ = '_conn',
+
     def __init__(self, connection: AsyncConnection, /) -> None:
         self._conn = connection
 
