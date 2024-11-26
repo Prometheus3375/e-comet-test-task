@@ -36,7 +36,7 @@ or execute script `create-tables.sql` for the database to create all necessary t
 If there is no database deployed, you can deploy PostgreSQL 17 locally via Docker.
 
 ```
-docker run --name postgresql -p5432:5432 -v $HOME/posgresql:/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres:17
+docker run --name postgresql -p5432:5432 -v $HOME/postgresql:/var/lib/postgresql/data -e POSTGRES_PASSWORD=mysecretpassword -d postgres:17
 ```
 
 You can connect to this database via
